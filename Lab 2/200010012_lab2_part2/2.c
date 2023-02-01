@@ -1,0 +1,1 @@
+printf("Minix: PID %d exited\n", mp->mp_pid);
