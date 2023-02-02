@@ -1,5 +1,7 @@
 # Operating Systems Lab Assignments
 
+//Informal Comments for juniors:
+
 Lab 1: Just Minix Setup. No folder for this. 
 
 Lab 2: A variety of things. I'm too lazy to type, but we used fork(), execvp() etc etc. Please check the folder!
