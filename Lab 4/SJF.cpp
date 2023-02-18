@@ -48,6 +48,8 @@ public:
 
 struct PriorityElement
 {
+    //value 1 is time needed to complete (not remaining time)
+    //value 2 is process ID 
     int value1;
     int value2;
 };
@@ -128,6 +130,8 @@ int main(int argc, char *argv[])
         {
             if (!processes.empty())
             {
+                //see if process with least arrival time can be added at the moment- Onboarding process
+                //process ID is 0 indexed and assigned according to order of addition to workingProcesses
                 if (system_time == processes.front().arrival_time)
                 {
                     Process newProcess = processes.front();
