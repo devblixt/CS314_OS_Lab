@@ -78,9 +78,9 @@ void T1 (Image &image) {
 void T2(Image &image) {
   // Define the box filter kernel
   const std::vector<std::vector<double>> kernel = {
-      {1.0 / 9, 1.0 / 9, 1.0 / 9},
-      {1.0 / 9, 1.0 / 9, 1.0 / 9},
-      {1.0 / 9, 1.0 / 9, 1.0 / 9}
+      {1.0 / 4, 1.0 / 4, 1.0 / 4},
+      {1.0 / 4, 1.0 / 4, 1.0 / 4},
+      {1.0 / 4, 1.0 / 4, 1.0 / 4}
   };
 
   // Create a temporary copy of the image to avoid modifying pixels multiple times
@@ -182,10 +182,10 @@ int main(int argc, char *argv[]) {
     readPPM(argv[1], pixels, width, height);
     
     // Apply the first transformation (e.g. grayscale)
-    // T1(pixels);
+    T1(pixels);
     
     // Apply the second transformation (e.g. edge detection)
-    T2(pixels);
+    // T3(pixels);
     
     // Write the output PPM file
     writePPM(argv[2], pixels, width, height);
