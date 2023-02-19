@@ -89,9 +89,9 @@ void GrayScale (Image &image) {
 void BLUR(Image &image) {
   // Define the box filter kernel
   const std::vector<std::vector<double>> kernel = {
-      {1.0 / 4, 1.0 / 4, 1.0 / 4},
-      {1.0 / 4, 1.0 / 4, 1.0 / 4},
-      {1.0 / 4, 1.0 / 4, 1.0 / 4}
+      {0.0625, 0.125, 0.0625},
+      {0.125, 0.25, 0.125},
+      {0.0625, 0.125, 0.0625}
   };
 
   // Create a temporary copy of the image to avoid modifying pixels multiple times

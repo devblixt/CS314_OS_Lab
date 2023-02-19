@@ -113,76 +113,75 @@ void T1 (key_t positionKey, key_t sharedDataKey, int pid, int height, int width)
     if(pid == 0 ) exit(0);
 }
 
-// void T2(key_t positionKey, key_t sharedDataKey, int pid, int height, int width) {
-//   //kill function call if parent 
-//   if(pid > 0)
-//     return;
-//   //shared data initializer for both Image Data and Position Data
-//   int shmid = shmget(sharedDataKey, sizef(struct Pixel) * width * height, 0666|IPC_CREAT);
-//   struct Pixel *sharedImage;
-//   sharedImage = (struct Pixel *) shmat(shmid, NULL, 0);
-//   //Semaphore time
-//   sem_t *sharedSemaphore = sem_open("/sharedSemaphore",O_RDWR);
-//   int *position;
-//   int positionShm = shmget(positionKey, sizeof(int) * 2, 0666|IPC_CREAT);
-//   position = (int *) shmat(positionShm, NULL, 0);
-//   struct Pixel temp;
-//   // Define the box filter kernel
-//   const std::vector<std::vector<double>> kernel = {
-//       {1.0 / 4, 1.0 / 4, 1.0 / 4},
-//       {1.0 / 4, 1.0 / 4, 1.0 / 4},
-//       {1.0 / 4, 1.0 / 4, 1.0 / 4}
-//   };
-//   struct Pixel *tempShared;
-//   tempShared = (struct Pixel*)malloc(sizeof(struct Pixel) * width * height);
-//   for(int y = 0; y < height ; y++) {
-//     for (int x = 0; x < width ; x++) {
-//         struct Pixel tempPixel = sharedImage[y * width + x];
-//         tempShared[y * width + x] = tempPixel;
-//   }}
-//   // Create a temporary copy of the image to avoid modifying pixels multiple times (not needed here)
-// //   std::vector<std::vector<Pixel>> temp_image = image;
+void T2(key_t positionKey, key_t sharedDataKey, int pid, int height, int width) {
+  //kill function call if parent 
+  if(pid > 0)
+    return;
+  //shared data initializer for both Image Data and Position Data
+  int shmid = shmget(sharedDataKey, sizeof(struct Pixel) * width * height, 0666|IPC_CREAT);
+  struct Pixel *sharedImage;
+  sharedImage = (struct Pixel *) shmat(shmid, NULL, 0);
+  //Semaphore time
+  sem_t *sharedSemaphore = sem_open("/sharedSemaphore",O_RDWR);
+  int *position;
+  int positionShm = shmget(positionKey, sizeof(int) * 2, 0666|IPC_CREAT);
+  position = (int *) shmat(positionShm, NULL, 0);
+  struct Pixel temp;
+  // Define the box filter kernel
+  const std::vector<std::vector<double>> kernel = {
+      {0.0625, 0.125, 0.0625},
+      {0.125, 0.25, 0.125},
+      {0.0625, 0.125, 0.0625}
+  };
+  struct Pixel *tempShared;
+  tempShared = (struct Pixel*)malloc(sizeof(struct Pixel) * width * height);
+  for(int y = 0; y < height ; y++) {
+    for (int x = 0; x < width ; x++) {
+        struct Pixel tempPixel = sharedImage[y * width + x];
+        tempShared[y * width + x] = tempPixel;
+  }}
+  // Create a temporary copy of the image to avoid modifying pixels multiple times (not needed here)
+//   std::vector<std::vector<Pixel>> temp_image = image;
   
-//   // Loop over each pixel in the image
-//   for (int y = 1; y < height - 1; y++) {
-//     for (int x = 1; x < width - 1; x++) {
+  // Loop over each pixel in the image
+  for (int y = 1; y < height - 1; y++) {
+    for (int x = 1; x < width - 1; x++) {
     
-//       // Initialize the sum of colors for the surrounding pixels to zero
-//       double sum_r = 0;
-//       double sum_g = 0;
-//       double sum_b = 0;
-//       // Loop over each pixel in the kernel
-//       for (int ky = -1; ky <= 1; ky++) {
-//         for (int kx = -1; kx <= 1; kx++) {
-//           // Compute the index of the neighboring pixel
-//           int ny = y + ky;
-//           int nx = x + kx;
-//           struct Pixel tempInner = sharedImage[ny * width + nx];       
-//           // Multiply the color of the neighboring pixel by the corresponding kernel value
-//           sum_r += kernel[ky + 1][kx + 1] * tempInner.r;
-//           sum_g += kernel[ky + 1][kx + 1] * tempInner.g;
-//           sum_b += kernel[ky + 1][kx + 1] * tempInner.b;
-//         }
-//       }
-//     struct Pixel temp;
-//       // Set the color of the current pixel to the weighted average of its neighbors
-//       temp.r = static_cast<unsigned char>(sum_r);
-//       temp.g = static_cast<unsigned char>(sum_g);
-//       temp.b = static_cast<unsigned char>(sum_b);
-//       tempShared[y*width + x ] = temp;
-//     }
-//   }
+      // Initialize the sum of colors for the surrounding pixels to zero
+      double sum_r = 0;
+      double sum_g = 0;
+      double sum_b = 0;
+      // Loop over each pixel in the kernel
+      for (int ky = -1; ky <= 1; ky++) {
+        for (int kx = -1; kx <= 1; kx++) {
+          // Compute the index of the neighboring pixel
+          int ny = y + ky;
+          int nx = x + kx;
+          struct Pixel tempInner = sharedImage[ny * width + nx];       
+          // Multiply the color of the neighboring pixel by the corresponding kernel value
+          sum_r += kernel[ky + 1][kx + 1] * tempInner.r;
+          sum_g += kernel[ky + 1][kx + 1] * tempInner.g;
+          sum_b += kernel[ky + 1][kx + 1] * tempInner.b;
+        }
+      }
+    struct Pixel temp;
+      // Set the color of the current pixel to the weighted average of its neighbors
+      temp.r = static_cast<unsigned char>(sum_r);
+      temp.g = static_cast<unsigned char>(sum_g);
+      temp.b = static_cast<unsigned char>(sum_b);
+      tempShared[y*width + x ] = temp;
+    }
+  }
 
-//   // Copy the modified pixels back to the original image
-//   for (int y=0 ; y < height ; y++){
-//     for (int x=0 ; x < width ; x++){
-//         struct Pixel tempPixel;
-//         tempPixel = tempShared[y*width + x];
-//         sharedImage[y*width + x] = tempPixel;
-//   }
-// }}
+  // Copy the modified pixels back to the original image
+  for (int y=0 ; y < height ; y++){
+    for (int x=0 ; x < width ; x++){
+        struct Pixel tempPixel;
+        tempPixel = tempShared[y*width + x];
+        sharedImage[y*width + x] = tempPixel;
+  }
+}}
 
-// Calculate the gradient magnitude of the image using Sobel edge detection
 // Calculate the gradient magnitude of the image using Sobel edge detection
 void T3(key_t positionKey, key_t sharedDataKey, int pid, int height, int width) {
     //kill function call if parent 
