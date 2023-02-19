@@ -1,10 +1,11 @@
-#include<iostream>
-#include<fstream>
-#include<string>
-#include<vector>
-#include<sstream>
-#include<math.h>
-#include<chrono>
+#include <bits/stdc++.h>
+#include <cmath>
+#include <vector>
+#include <chrono>
+#include <thread>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <atomic>
 
 using namespace std;
 using namespace std::chrono;
@@ -17,9 +18,9 @@ struct PPMHEADER {
     int width;
     int maxcolor;
     char PPMC[100];
-}
+};
 
-typedef std::vector<std::vector<Pixel>> Image;
+typedef vector<vector<Pixel>> Image;
 
 void readPPM(char *filename,Image & image, int& width, int& height) {
   std::ifstream inFile(filename, std::ios::binary);
@@ -75,7 +76,6 @@ void T1 (char *inputFile, int pid, int pipefds[2], int pipefds2[2]) {
         return;
     }
     int height, width, colormax;
-    char PPMC[100];
     int r, g, b;
     FILE *inputImage = fopen(inputFile, "r");
 
@@ -85,19 +85,11 @@ void T1 (char *inputFile, int pid, int pipefds[2], int pipefds2[2]) {
     storeHeader[0].height = height;
     storeHeader[0].width = width;
     storeHeader[0].maxcolor = colormax;
-    write(pipefds2[1], storeHeader, sizeof(struct head));
+    write(pipefds2[1], storeHeader, sizeof(struct PPMHEADER));
 
-    vector<vector<pixel>> image(height, vector<pixel>(width));
+    vector<vector<Pixel>> image;
 
-    for (int i = height - 1; i >= 0; i--){
-        for (int j = 0; j < width; j++){
-            fscanf(inputImage, "%d%d%d", &r, &g, &b);
-            image[i][j].r = r;
-            image[i][j].g = g;
-            image[i][j].b = b;
-        }
-    }
-    fclose(inputImage);
+    readPPM(inputFile, image, width, height);
     //luminosity method for pixel to grayscale
     for (int y=0; y<image.size(); y++) {
         for(int x=0; x <image[y].size();x++) {
@@ -108,25 +100,46 @@ void T1 (char *inputFile, int pid, int pipefds[2], int pipefds2[2]) {
             image[y][x].b=graypix;
         }
     }
-    struct Pixel pixelMatrix[9];
-    for (int i = 0; i <= height - 3; i += 3){
-    for (int j = 0; j <= width - 3; j += 3){
+    // struct Pixel pixelMatrix[9];
+    // for (int i = 0; i <= height - 3; i += 3){
+    // for (int j = 0; j <= width - 3; j += 3){
             
-            pixelMatrix[0] = arrayOfData[i][j];
-            pixelMatrix[1] = arrayOfData[i][j + 1];
-            pixelMatrix[2] = arrayOfData[i][j + 2];
+    //         pixelMatrix[0] = arrayOfData[i][j];
+    //         pixelMatrix[1] = arrayOfData[i][j + 1];
+    //         pixelMatrix[2] = arrayOfData[i][j + 2];
 
-            pixelMatrix[3] = arrayOfData[i + 1][j];
-            pixelMatrix[4] = arrayOfData[i + 1][j + 1];
-            pixelMatrix[5] = arrayOfData[i + 1][j + 2];
+    //         pixelMatrix[3] = arrayOfData[i + 1][j];
+    //         pixelMatrix[4] = arrayOfData[i + 1][j + 1];
+    //         pixelMatrix[5] = arrayOfData[i + 1][j + 2];
 
-            pixelMatrix[6] = arrayOfData[i + 2][j];
-            pixelMatrix[7] = arrayOfData[i + 2][j + 1];
-            pixelMatrix[8] = arrayOfData[i + 2][j + 2];
+    //         pixelMatrix[6] = arrayOfData[i + 2][j];
+    //         pixelMatrix[7] = arrayOfData[i + 2][j + 1];
+    //         pixelMatrix[8] = arrayOfData[i + 2][j + 2];
 
-            write(pipefds[1], pixelMatrix, sizeof(pixelMatrix));
-        }
-    }
+    //         write(pipefds[1], pixelMatrix, sizeof(pixelMatrix));
+    //     }
+    // }
+    for(int y = 0; y<image.size(); y++) {
+        for(int x = 0; x<image[y].size(); x++) {
+            struct Pixel tempPix[1];
+            tempPix[0] = image[y][x];
+            write(pipefds[1], tempPix, sizeof(tempPix));
+    }}
+    // ofstream fout("testing.ppm", ios::out | ios::binary);
+    
+    // // Write the PPM header
+    // fout << "P6\n" << width << " " << height << "\n" << 255 << "\n";
+    
+    // // Write the pixel data
+    // for (int i = 0; i < height; i++) {
+    //     for (int j = 0; j < width; j++) {
+    //         fout << image[i][j].r << image[i][j].g << image[i][j].b;
+    //     }
+    // }
+    
+    // // Close the output file
+    // fout.close();
+    exit(EXIT_SUCCESS);
 }
 
 void T2(Image &image) {
@@ -188,8 +201,19 @@ void T3(char *outputFile, int pid, int pipefds[2], int pipefds2[2]) {
     // Create a temporary copy of the input pixels
     struct Pixel pixelMatrix[9];
     struct PPMHEADER header[1];
-
-    
+    read(pipefds2[0], header, sizeof(header));
+    int width = header[0].width;
+    int height = header[0].height;
+    int colormax = header[0].maxcolor;
+    vector<vector<Pixel>> pixels(height, vector<Pixel>(width));
+    for(int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            struct Pixel tempPixel[1];
+            read(pipefds[0], tempPixel, sizeof(tempPixel));
+            pixels[y][x] = tempPixel[0];
+        }
+    }
+    vector<vector<Pixel>> tempPixels = pixels;
     // Define the Sobel operator kernels
     int gx[3][3] = {{1, 0, -1}, {2, 0, -2}, {1, 0, -1}};
     int gy[3][3] = {{-1, -2, -1}, {0, 0, 0}, {1, 2, 1}};
@@ -213,6 +237,21 @@ void T3(char *outputFile, int pid, int pipefds[2], int pipefds2[2]) {
             pixels[y][x].b = mag;
         }
     }
+    ofstream fout(outputFile, ios::out | ios::binary);
+    
+    // Write the PPM header
+    fout << "P6\n" << width << " " << height << "\n" << 255 << "\n";
+    
+    // Write the pixel data
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            fout << pixels[i][j].r << pixels[i][j].g << pixels[i][j].b;
+        }
+    }
+    
+    // Close the output file
+    fout.close();
+    exit(EXIT_SUCCESS);
 }
 
 void writePPM(string filename, Image & pixels, int width, int height) {
@@ -269,6 +308,8 @@ int main(int argc, char *argv[]) {
     
     // Apply the third transformation (e.g. edge detection)
     T3(argv[2],fork(),pipefds,pipefds2);
+    wait(NULL);
+    wait(NULL);
     auto stop = stopTime();
     // Write the output PPM file
     // writePPM(argv[2], pixels, width, height);
