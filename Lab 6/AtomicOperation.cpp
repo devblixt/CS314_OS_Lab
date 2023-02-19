@@ -68,7 +68,7 @@ void readPPM(char *filename,Image & image, int& width, int& height) {
   }
 }
 
-void T1 (Image &image) {
+void GrayScale (Image &image) {
     //luminosity method for pixel to grayscale
     for (int y=0; y<image.size(); y++) {
         for(int x=0; x <image[y].size();x++) {
@@ -85,7 +85,7 @@ void T1 (Image &image) {
     }
 }
 
-void T2(Image &image) {
+void BLUR(Image &image) {
   // Define the box filter kernel
   const std::vector<std::vector<double>> kernel = {
       {1.0 / 4, 1.0 / 4, 1.0 / 4},
@@ -202,12 +202,13 @@ int main(int argc, char *argv[]) {
     Image pixels;
     int width, height;
     readPPM(argv[1], pixels, width, height);
-    
+    thread T1 (GrayScale, std::ref(pixels));
+    thread T2 (BLUR, std::ref(pixels));
     // Apply the first transformation (e.g. grayscale)
-    T1(pixels);
+    T1.join(); 
     
     // Apply the second transformation (e.g. edge detection)
-    T3(pixels);
+    T2.join(); 
     
     // Write the output PPM file
     writePPM(argv[2], pixels, width, height);
