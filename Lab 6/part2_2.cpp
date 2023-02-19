@@ -11,7 +11,7 @@
 #include <sys/wait.h>
 
 using namespace std;
-
+using namespace std::chrono;
 sem_t sema;
 int position[2] = {0,0};
 
@@ -110,6 +110,7 @@ void T1 (key_t positionKey, key_t sharedDataKey, int pid, int height, int width)
             sem_post(sharedSemaphore);
         }
     }
+    if(pid == 0 ) exit(0);
 }
 
 // void T2(key_t positionKey, key_t sharedDataKey, int pid, int height, int width) {
@@ -234,6 +235,8 @@ void T3(key_t positionKey, key_t sharedDataKey, int pid, int height, int width) 
         }
         if(PREVENT_ERROR) y-=1;
     }
+    if(pid == 0 )
+        exit(0);
 }
 
 // void writePPM(string filename, Image & pixels, int width, int height) {
@@ -253,7 +256,14 @@ void T3(key_t positionKey, key_t sharedDataKey, int pid, int height, int width) 
 //     // Close the output file
 //     fout.close();
 // }
-
+auto startTime(){
+    auto start = chrono::high_resolution_clock::now();
+    return start;
+}
+auto stopTime(){
+    auto stop = chrono::high_resolution_clock::now();
+    return stop;
+}
 
 int main(int argc, char *argv[]) {
     // Check that the input arguments are valid
@@ -279,10 +289,12 @@ int main(int argc, char *argv[]) {
     // Apply the first transformation (e.g. grayscale)
     
     sem_t *binarySemaphore = sem_open("/sharedSemaphore", O_CREAT | O_EXCL, (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP), 1);
+    auto start = startTime();
     T1(positionKey, key, fork(), height, width);
     T3(positionKey, key, fork(), height, width);
     wait(NULL);
     wait(NULL);
+    auto stop = stopTime();
     // wait(NULL);
     // // Apply the second transformation (e.g. edge detection)
     // T3(pixels);
@@ -297,6 +309,8 @@ int main(int argc, char *argv[]) {
             fout << tempPixel.r << tempPixel.g << tempPixel.b;
         }
     }
+        auto duration = duration_cast<microseconds>(stop - start);
+            cout << "Time Elapsed: " << duration.count() << " microseconds" << endl;
     // Exit the program
     return 0;
 }

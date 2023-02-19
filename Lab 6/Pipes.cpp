@@ -4,19 +4,20 @@
 #include<vector>
 #include<sstream>
 #include<math.h>
-#include<stdbool.h>
 #include<chrono>
-#include<thread>
-#include<atomic>
+
 using namespace std;
 using namespace std::chrono;
-
-atomic_flag molecule = ATOMIC_FLAG_INIT;
-int position[2] = {0,0};
-
 struct Pixel {
     unsigned char r,g,b;
 };
+
+struct PPMHEADER {
+    int height;
+    int width;
+    int maxcolor;
+    char PPMC[100];
+}
 
 typedef std::vector<std::vector<Pixel>> Image;
 
@@ -69,85 +70,134 @@ void readPPM(char *filename,Image & image, int& width, int& height) {
   }
 }
 
-void GrayScale (Image &image) {
+void T1 (char *inputFile, int pid, int pipefds[2], int pipefds2[2]) {
+    if(pid>0){
+        return;
+    }
+    int height, width, colormax;
+    char PPMC[100];
+    int r, g, b;
+    FILE *inputImage = fopen(inputFile, "r");
+
+    struct PPMHEADER storeHeader[1];
+
+    fscanf(inputImage, "%s%d%d%d", storeHeader[0].PPMC, &width, &height, &colormax);
+    storeHeader[0].height = height;
+    storeHeader[0].width = width;
+    storeHeader[0].maxcolor = colormax;
+    write(pipefds2[1], storeHeader, sizeof(struct head));
+
+    vector<vector<pixel>> image(height, vector<pixel>(width));
+
+    for (int i = height - 1; i >= 0; i--){
+        for (int j = 0; j < width; j++){
+            fscanf(inputImage, "%d%d%d", &r, &g, &b);
+            image[i][j].r = r;
+            image[i][j].g = g;
+            image[i][j].b = b;
+        }
+    }
+    fclose(inputImage);
     //luminosity method for pixel to grayscale
     for (int y=0; y<image.size(); y++) {
         for(int x=0; x <image[y].size();x++) {
-            while(atomic_flag_test_and_set(&molecule));
             int gray = 0.21*image[y][x].r + 0.72*image[y][x].g + 0.07*image[y][x].b;
             unsigned char graypix = static_cast<unsigned char>(gray);
             image[y][x].r=graypix;
             image[y][x].g=graypix;
             image[y][x].b=graypix;
-            position[0] = x+1;
-            position[1] = y+1;
-            atomic_flag_clear(&molecule);
+        }
+    }
+    struct Pixel pixelMatrix[9];
+    for (int i = 0; i <= height - 3; i += 3){
+    for (int j = 0; j <= width - 3; j += 3){
+            
+            pixelMatrix[0] = arrayOfData[i][j];
+            pixelMatrix[1] = arrayOfData[i][j + 1];
+            pixelMatrix[2] = arrayOfData[i][j + 2];
+
+            pixelMatrix[3] = arrayOfData[i + 1][j];
+            pixelMatrix[4] = arrayOfData[i + 1][j + 1];
+            pixelMatrix[5] = arrayOfData[i + 1][j + 2];
+
+            pixelMatrix[6] = arrayOfData[i + 2][j];
+            pixelMatrix[7] = arrayOfData[i + 2][j + 1];
+            pixelMatrix[8] = arrayOfData[i + 2][j + 2];
+
+            write(pipefds[1], pixelMatrix, sizeof(pixelMatrix));
         }
     }
 }
 
-void BLUR(Image &image) {
+void T2(Image &image) {
   // Define the box filter kernel
   const std::vector<std::vector<double>> kernel = {
-      {1.0 / 4, 1.0 / 4, 1.0 / 4},
-      {1.0 / 4, 1.0 / 4, 1.0 / 4},
-      {1.0 / 4, 1.0 / 4, 1.0 / 4}
+      // {1.0 / 20, 1.0 / 10, 1.0 / 20},
+      // {1.0 / 10, 1.0 / 10, 1.0 / 10},
+      // {1.0 / 20, 1.0 / 10, 1.0 / 20}
+      {0.0625, 0.125, 0.0625},
+      {0.125, 0.25, 0.125},
+      {0.0625, 0.125, 0.0625}
   };
 
   // Create a temporary copy of the image to avoid modifying pixels multiple times
   std::vector<std::vector<Pixel>> temp_image = image;
 
   // Loop over each pixel in the image
-  for (int y = 1; y < image.size() - 1; y++) {
-    for (int x = 1; x < image[y].size() - 1; x++) {
-    
-      // Initialize the sum of colors for the surrounding pixels to zero
-      double sum_r = 0;
-      double sum_g = 0;
-      double sum_b = 0;
+  int num_iter = 50;
+  for(int i = 0; i < num_iter; i++){
+    for (int y = 1; y < image.size() - 1; y++) {
+      for (int x = 1; x < image[y].size() - 1; x++) {
+        // Initialize the sum of colors for the surrounding pixels to zero
+        double sum_r = 0;
+        double sum_g = 0;
+        double sum_b = 0;
 
-      // Loop over each pixel in the kernel
-      for (int ky = -1; ky <= 1; ky++) {
-        for (int kx = -1; kx <= 1; kx++) {
-          // Compute the index of the neighboring pixel
-          int ny = y + ky;
-          int nx = x + kx;
+        // Loop over each pixel in the kernel
+        for (int ky = -1; ky <= 1; ky++) {
+          for (int kx = -1; kx <= 1; kx++) {
+            // Compute the index of the neighboring pixel
+            int ny = y + ky;
+            int nx = x + kx;
 
-          // Multiply the color of the neighboring pixel by the corresponding kernel value
-          sum_r += kernel[ky + 1][kx + 1] * image[ny][nx].r;
-          sum_g += kernel[ky + 1][kx + 1] * image[ny][nx].g;
-          sum_b += kernel[ky + 1][kx + 1] * image[ny][nx].b;
+            // Multiply the color of the neighboring pixel by the corresponding kernel value
+            sum_r += kernel[ky + 1][kx + 1] * image[ny][nx].r;
+            sum_g += kernel[ky + 1][kx + 1] * image[ny][nx].g;
+            sum_b += kernel[ky + 1][kx + 1] * image[ny][nx].b;
+          }
         }
+
+        // Set the color of the current pixel to the weighted average of its neighbors
+        temp_image[y][x].r = static_cast<unsigned char>(sum_r);
+        temp_image[y][x].g = static_cast<unsigned char>(sum_g);
+        temp_image[y][x].b = static_cast<unsigned char>(sum_b);
       }
-
-      // Set the color of the current pixel to the weighted average of its neighbors
-      temp_image[y][x].r = static_cast<unsigned char>(sum_r);
-      temp_image[y][x].g = static_cast<unsigned char>(sum_g);
-      temp_image[y][x].b = static_cast<unsigned char>(sum_b);
     }
-  }
 
-  // Copy the modified pixels back to the original image
-  image = temp_image;
+    // Copy the modified pixels back to the original image
+    image = temp_image;
+  }
 }
 
 // Calculate the gradient magnitude of the image using Sobel edge detection
-// Calculate the gradient magnitude of the image using Sobel edge detection
-void T3(Image& pixels) {
+// Ref: https://www.cs.auckland.ac.nz/compsci373s1c/PatricesLectures/Edge%20detection-Sobel_2up.pdf 
+void T3(char *outputFile, int pid, int pipefds[2], int pipefds2[2]) {
+    if(pid > 0){
+        return;
+    }
     // Create a temporary copy of the input pixels
-    Image tempPixels = pixels;
+    struct Pixel pixelMatrix[9];
+    struct PPMHEADER header[1];
+
     
     // Define the Sobel operator kernels
-    int gx[3][3] = {{-1, 0, 1}, {-2, 0, 2}, {-1, 0, 1}};
+    int gx[3][3] = {{1, 0, -1}, {2, 0, -2}, {1, 0, -1}};
     int gy[3][3] = {{-1, -2, -1}, {0, 0, 0}, {1, 2, 1}};
-    bool PREVENT_ERROR = false;
+    
     // Loop over each pixel in the input pixels
     for (int y = 1; y < pixels.size() - 1; y++) {
         for (int x = 1; x < pixels[y].size() - 1; x++) {
-            while(atomic_flag_test_and_set(&molecule));
             // Calculate the gradient magnitude of the pixel using the Sobel kernels
-
-            if(position[0]>=x+1||position[1]>=y+1) {
             int gx_sum = 0, gy_sum = 0;
             for (int j = -1; j <= 1; j++) {
                 for (int i = -1; i <= 1; i++) {
@@ -161,15 +211,7 @@ void T3(Image& pixels) {
             pixels[y][x].r = mag;
             pixels[y][x].g = mag;
             pixels[y][x].b = mag;
-            PREVENT_ERROR = false;
-            }
-            else {
-                PREVENT_ERROR = true;
-            }
-            atomic_flag_clear(&molecule);
-            if(PREVENT_ERROR) x-=1;
         }
-        if(PREVENT_ERROR) y-=1;
     }
 }
 
@@ -194,6 +236,7 @@ auto startTime(){
     auto start = chrono::high_resolution_clock::now();
     return start;
 }
+
 auto stopTime(){
     auto stop = chrono::high_resolution_clock::now();
     return stop;
@@ -205,22 +248,30 @@ int main(int argc, char *argv[]) {
         std::cerr << "Usage: " << argv[0] << " <path-to-original-image> <path-to-transformed-image>" << endl;
         return 1;
     }
-    
+    int pipefds[2];
+    if(pipe(pipefds) == -1) {
+        perror("pipe");
+    }
+    int pipefds2[2];
+    if(pipe(pipefds2) == -1) {
+        perror("pipe");
+    }
     // Read the input PPM file
     Image pixels;
     int width, height;
     readPPM(argv[1], pixels, width, height);
     auto start = startTime();
-    thread T1 (GrayScale, std::ref(pixels));
-    thread T2 (BLUR, std::ref(pixels));
     // Apply the first transformation (e.g. grayscale)
-    T1.join(); 
+    T1(argv[1],fork(),pipefds,pipefds2);
+
+    // Apply the second transformation (e.g. image blur)
+    // T2(pixels);
     
-    // Apply the second transformation (e.g. edge detection)
-    T2.join(); 
+    // Apply the third transformation (e.g. edge detection)
+    T3(argv[2],fork(),pipefds,pipefds2);
     auto stop = stopTime();
     // Write the output PPM file
-    writePPM(argv[2], pixels, width, height);
+    // writePPM(argv[2], pixels, width, height);
     auto duration = duration_cast<microseconds>(stop - start);
     cout << "Time Elapsed: " << duration.count() << " microseconds" << endl;
     // Exit the program

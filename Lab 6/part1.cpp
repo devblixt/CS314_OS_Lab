@@ -4,9 +4,10 @@
 #include<vector>
 #include<sstream>
 #include<math.h>
+#include<chrono>
 
 using namespace std;
-
+using namespace std::chrono;
 struct Pixel {
     unsigned char r,g,b;
 };
@@ -173,7 +174,15 @@ void writePPM(string filename, Image & pixels, int width, int height) {
     // Close the output file
     fout.close();
 }
+auto startTime(){
+    auto start = chrono::high_resolution_clock::now();
+    return start;
+}
 
+auto stopTime(){
+    auto stop = chrono::high_resolution_clock::now();
+    return stop;
+}
 
 int main(int argc, char *argv[]) {
     // Check that the input arguments are valid
@@ -186,19 +195,20 @@ int main(int argc, char *argv[]) {
     Image pixels;
     int width, height;
     readPPM(argv[1], pixels, width, height);
-    
+    auto start = startTime();
     // Apply the first transformation (e.g. grayscale)
-    // T1(pixels);
+    T1(pixels);
 
     // Apply the second transformation (e.g. image blur)
     // T2(pixels);
     
     // Apply the third transformation (e.g. edge detection)
     T3(pixels);
-    
+    auto stop = stopTime();
     // Write the output PPM file
     writePPM(argv[2], pixels, width, height);
-    
+    auto duration = duration_cast<microseconds>(stop - start);
+    cout << "Time Elapsed: " << duration.count() << " microseconds" << endl;
     // Exit the program
     return 0;
 }

@@ -9,7 +9,7 @@
 #include<thread>
 #include<semaphore.h>
 using namespace std;
-
+using namespace std::chrono;
 sem_t sema;
 int position[2] = {0,0};
 
@@ -190,6 +190,14 @@ void writePPM(string filename, Image & pixels, int width, int height) {
     fout.close();
 }
 
+auto startTime(){
+    auto start = chrono::high_resolution_clock::now();
+    return start;
+}
+auto stopTime(){
+    auto stop = chrono::high_resolution_clock::now();
+    return stop;
+}
 
 int main(int argc, char *argv[]) {
     // Check that the input arguments are valid
@@ -202,6 +210,7 @@ int main(int argc, char *argv[]) {
     Image pixels;
     int width, height;
     readPPM(argv[1], pixels, width, height);
+    auto start = startTime();
     thread T1 (GrayScale, std::ref(pixels));
     thread T2 (BLUR, std::ref(pixels));
     // Apply the first transformation (e.g. grayscale)
@@ -209,10 +218,11 @@ int main(int argc, char *argv[]) {
     
     // Apply the second transformation (e.g. edge detection)
     T2.join();
-    
+    auto stop = stopTime();
     // Write the output PPM file
     writePPM(argv[2], pixels, width, height);
-    
+        auto duration = duration_cast<microseconds>(stop - start);
+            cout << "Time Elapsed: " << duration.count() << " microseconds" << endl;
     // Exit the program
     return 0;
 }
