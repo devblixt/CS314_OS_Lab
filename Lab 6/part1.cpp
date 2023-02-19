@@ -90,7 +90,8 @@ void T2(Image &image) {
   std::vector<std::vector<Pixel>> temp_image = image;
 
   // Loop over each pixel in the image
-  for(int i=0; i<50; i++){
+  int num_iter = 50;
+  for(int i = 0; i < num_iter; i++){
     for (int y = 1; y < image.size() - 1; y++) {
       for (int x = 1; x < image[y].size() - 1; x++) {
         // Initialize the sum of colors for the surrounding pixels to zero
@@ -125,13 +126,13 @@ void T2(Image &image) {
 }
 
 // Calculate the gradient magnitude of the image using Sobel edge detection
-// Calculate the gradient magnitude of the image using Sobel edge detection
+// Ref: https://www.cs.auckland.ac.nz/compsci373s1c/PatricesLectures/Edge%20detection-Sobel_2up.pdf 
 void T3(Image& pixels) {
     // Create a temporary copy of the input pixels
     Image tempPixels = pixels;
     
     // Define the Sobel operator kernels
-    int gx[3][3] = {{-1, 0, 1}, {-2, 0, 2}, {-1, 0, 1}};
+    int gx[3][3] = {{1, 0, -1}, {2, 0, -2}, {1, 0, -1}};
     int gy[3][3] = {{-1, -2, -1}, {0, 0, 0}, {1, 2, 1}};
     
     // Loop over each pixel in the input pixels
@@ -189,10 +190,11 @@ int main(int argc, char *argv[]) {
     // Apply the first transformation (e.g. grayscale)
     // T1(pixels);
 
-    T2(pixels);
+    // Apply the second transformation (e.g. image blur)
+    // T2(pixels);
     
-    // Apply the second transformation (e.g. edge detection)
-    // T3(pixels);
+    // Apply the third transformation (e.g. edge detection)
+    T3(pixels);
     
     // Write the output PPM file
     writePPM(argv[2], pixels, width, height);
