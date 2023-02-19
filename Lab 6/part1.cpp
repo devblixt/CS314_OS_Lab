@@ -78,45 +78,50 @@ void T1 (Image &image) {
 void T2(Image &image) {
   // Define the box filter kernel
   const std::vector<std::vector<double>> kernel = {
-      {1.0 / 4, 1.0 / 4, 1.0 / 4},
-      {1.0 / 4, 1.0 / 4, 1.0 / 4},
-      {1.0 / 4, 1.0 / 4, 1.0 / 4}
+      // {1.0 / 20, 1.0 / 10, 1.0 / 20},
+      // {1.0 / 10, 1.0 / 10, 1.0 / 10},
+      // {1.0 / 20, 1.0 / 10, 1.0 / 20}
+      {0.0625, 0.125, 0.0625},
+      {0.125, 0.25, 0.125},
+      {0.0625, 0.125, 0.0625}
   };
 
   // Create a temporary copy of the image to avoid modifying pixels multiple times
   std::vector<std::vector<Pixel>> temp_image = image;
 
   // Loop over each pixel in the image
-  for (int y = 1; y < image.size() - 1; y++) {
-    for (int x = 1; x < image[y].size() - 1; x++) {
-      // Initialize the sum of colors for the surrounding pixels to zero
-      double sum_r = 0;
-      double sum_g = 0;
-      double sum_b = 0;
+  for(int i=0; i<50; i++){
+    for (int y = 1; y < image.size() - 1; y++) {
+      for (int x = 1; x < image[y].size() - 1; x++) {
+        // Initialize the sum of colors for the surrounding pixels to zero
+        double sum_r = 0;
+        double sum_g = 0;
+        double sum_b = 0;
 
-      // Loop over each pixel in the kernel
-      for (int ky = -1; ky <= 1; ky++) {
-        for (int kx = -1; kx <= 1; kx++) {
-          // Compute the index of the neighboring pixel
-          int ny = y + ky;
-          int nx = x + kx;
+        // Loop over each pixel in the kernel
+        for (int ky = -1; ky <= 1; ky++) {
+          for (int kx = -1; kx <= 1; kx++) {
+            // Compute the index of the neighboring pixel
+            int ny = y + ky;
+            int nx = x + kx;
 
-          // Multiply the color of the neighboring pixel by the corresponding kernel value
-          sum_r += kernel[ky + 1][kx + 1] * image[ny][nx].r;
-          sum_g += kernel[ky + 1][kx + 1] * image[ny][nx].g;
-          sum_b += kernel[ky + 1][kx + 1] * image[ny][nx].b;
+            // Multiply the color of the neighboring pixel by the corresponding kernel value
+            sum_r += kernel[ky + 1][kx + 1] * image[ny][nx].r;
+            sum_g += kernel[ky + 1][kx + 1] * image[ny][nx].g;
+            sum_b += kernel[ky + 1][kx + 1] * image[ny][nx].b;
+          }
         }
+
+        // Set the color of the current pixel to the weighted average of its neighbors
+        temp_image[y][x].r = static_cast<unsigned char>(sum_r);
+        temp_image[y][x].g = static_cast<unsigned char>(sum_g);
+        temp_image[y][x].b = static_cast<unsigned char>(sum_b);
       }
-
-      // Set the color of the current pixel to the weighted average of its neighbors
-      temp_image[y][x].r = static_cast<unsigned char>(sum_r);
-      temp_image[y][x].g = static_cast<unsigned char>(sum_g);
-      temp_image[y][x].b = static_cast<unsigned char>(sum_b);
     }
-  }
 
-  // Copy the modified pixels back to the original image
-  image = temp_image;
+    // Copy the modified pixels back to the original image
+    image = temp_image;
+  }
 }
 
 // Calculate the gradient magnitude of the image using Sobel edge detection
@@ -182,7 +187,9 @@ int main(int argc, char *argv[]) {
     readPPM(argv[1], pixels, width, height);
     
     // Apply the first transformation (e.g. grayscale)
-    T1(pixels);
+    // T1(pixels);
+
+    T2(pixels);
     
     // Apply the second transformation (e.g. edge detection)
     // T3(pixels);
