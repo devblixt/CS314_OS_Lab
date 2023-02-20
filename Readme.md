@@ -10,4 +10,8 @@ Lab 3: Swapped PIDs are printed by modifying schedule files in Minix, plus we us
 
 Lab 4: Simulated SJF and SRTF schedulers in C++, since my roll number is even. 
 
+Lab 5: Measuring time quanta allotted and order of execution for each process in a worklod mix (created by us), and then comparing it to after implementing a pseudo-FIFO scheduling
+
+Lab 6: Image Transformation in sequential manner and using concurrency as well - four methods have been used, which are atomic operations, semaphores, shared memory and pipes. 
+
 PS: Some stuff is a bit cluttery, please understand it yourself (it is self-explanatory (probably))
