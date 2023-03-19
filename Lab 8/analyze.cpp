@@ -49,11 +49,11 @@ void fifo(std::vector<int> seq)
             }
         }
     }
-    cout << "FIFO: " << endl;
-    std::cout << "hits: " << hit << " miss: " << miss << std::endl;
+    float percentage = (float) miss / (float) hit + (float) miss;
     // for(auto &itr: mmpages){
     //     cout<<"itr: "<<itr<<std::endl;
     // }
+    cout<<percentage<<" ";
 }
 
 void lru(std::vector<int> seq)
@@ -83,11 +83,13 @@ void lru(std::vector<int> seq)
             }
         }
     }
-    cout << "LRU: " << endl;
-    cout << "hits: " << hit << " miss: " << miss << endl;
+    // cout << "LRU: " << endl;
+    // cout << "hits: " << hit << " miss: " << miss << endl;
     //     for(auto &itr: mmpages){
     //     cout<<"itr: "<<itr<<std::endl;
     // }
+    float percentage = (float) miss / (float) hit + (float) miss;
+    cout<<percentage <<" ";
 }
 
 void random(std::vector<int> seq)
@@ -123,8 +125,10 @@ void random(std::vector<int> seq)
             }
         }
     }
-    cout << "RANDOM: " << endl;
-    cout << "hits: " << hit << " miss: " << miss << endl;
+    // cout << "RANDOM: " << endl;
+    // cout << "hits: " << hit << " miss: " << miss << endl;
+    float percentage = (float) miss / (float) hit + (float) miss;
+    cout<<percentage;
 }
 
 int main(int argc, char *argv[])
@@ -164,6 +168,7 @@ int main(int argc, char *argv[])
         pages.insert(number);
     }
     auto set_size = pages.size();
+    // cout<<"set size "<<set_size<<endl;
     if(set_size > (mpages + dpages)){
         cout<<"Can't accomodate pages!";
         exit(EXIT_FAILURE);
