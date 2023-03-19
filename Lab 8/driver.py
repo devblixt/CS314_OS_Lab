@@ -2,7 +2,7 @@ import subprocess
 import matplotlib.pyplot as plt
 import sys
 
-x = 60
+x = 100
 z = 30
 y_values = range(int(sys.argv[2]), int(sys.argv[3]))
 results = {
@@ -12,7 +12,7 @@ results = {
 }
 
 for y in range(int(sys.argv[2]), int(sys.argv[3])):
-    cmd = ['a.exe', '60', str(y), '30', sys.argv[1]]
+    cmd = ['a.exe', str(x), str(y), str(z), sys.argv[1]]
     output = subprocess.check_output(cmd, shell=True)
     print(output.decode('utf-8'))
     percentages = output.decode().strip().split()
