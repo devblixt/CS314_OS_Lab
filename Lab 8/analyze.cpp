@@ -49,11 +49,11 @@ void fifo(std::vector<int> seq)
             }
         }
     }
-    float percentage = (float) miss / (float) hit + (float) miss;
+    float percentage = (float) miss / ((float) hit + (float) miss);
     // for(auto &itr: mmpages){
     //     cout<<"itr: "<<itr<<std::endl;
     // }
-    cout<<percentage<<" ";
+    cout<<percentage*100<<" ";
 }
 
 void lru(std::vector<int> seq)
@@ -88,8 +88,8 @@ void lru(std::vector<int> seq)
     //     for(auto &itr: mmpages){
     //     cout<<"itr: "<<itr<<std::endl;
     // }
-    float percentage = (float) miss / (float) hit + (float) miss;
-    cout<<percentage <<" ";
+    float percentage = (float) miss / ((float) hit + (float) miss);
+    cout<<percentage*100 <<" ";
 }
 
 void random(std::vector<int> seq)
@@ -127,8 +127,8 @@ void random(std::vector<int> seq)
     }
     // cout << "RANDOM: " << endl;
     // cout << "hits: " << hit << " miss: " << miss << endl;
-    float percentage = (float) miss / (float) hit + (float) miss;
-    cout<<percentage;
+    float percentage = (float) miss / ( hit +  miss);
+    cout<<percentage*100;
 }
 
 int main(int argc, char *argv[])
